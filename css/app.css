@@ -1,0 +1,58 @@
+body {
+	background-color: white;
+	text-align: center;
+	color: lightgray;
+	font-family: Arial, Helvetica, sans-serif;
+}
+
+table {
+    margin: 20px auto;
+    border-collapse: collapse;
+}
+
+td {
+    border: 2px solid #ccc;
+    padding: 20px;
+    font-size: 20px;
+    width: 60px;
+    height: 60px;
+    text-align: center;
+    cursor: pointer;
+}
+
+td:hover {
+    background-color: #f0f0f0;
+}
+
+
+img {
+	width: 30px;
+}
+
+.cell {
+	width: 40px;
+	height: 40px;
+	font-size: 1.5em;
+}
+
+.hidden {
+	display: none;
+	position: absolute;
+}
+
+.game-over {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	text-align: center;
+	transform: translate(-50%, -50%);
+}
+
+button {
+	margin: 15px;
+	padding: 10px;
+	border-radius: 20px;
+	border: none;
+	width: 100px;
+	cursor: pointer;
+}
