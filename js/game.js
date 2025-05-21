@@ -2,7 +2,6 @@
 
 const MINE = 'MINE'
 const FLAG = 'FLAG'
-
 const MINE_IMG = '<img src="img/bomb.png">'
 const FLAG_IMG = '<img src="img/flag.png">'
 
@@ -24,6 +23,8 @@ function onInit() {
     gBoard = buildBoard(gLevel.SIZE)
     addRandomMines(gBoard)
     setMinesNegsCount(gBoard)
+
+    gGame.isOn = true
 
     //gBoard[1][2].isRevealed = true
     //gBoard[2][3].isRevealed = true
@@ -47,23 +48,26 @@ function buildBoard(size) {
         }
         board.push(row)
     }
+    console.table(board)
     return board
 }
 
 function createCell() {
-    return {
+    var cell = {
         minesAroundCount: 0,
         isRevealed: false,
         isMine: false,
-        isMarked: false
+        isMarked: false,
+        isClicked: false,
     }
+    console.log('Cell:', cell)
+    return cell
 }
 
 function addRandomMines(board) {
-    board[1][2].isMine = true
-    board[2][3].isMine = true
+    //board[1][2].isMine = true
+    //board[2][3].isMine = true
 
-    /*
     var addedMines = 0
 
     while (addedMines < gLevel.MINES) {
@@ -75,7 +79,6 @@ function addRandomMines(board) {
             addedMines++
         }
     }
-        */
 }
 
 function renderBoard(board) {
@@ -86,11 +89,14 @@ function renderBoard(board) {
         strHTML += '<tr>'
         for (var j = 0; j < board[i].length; j++) {
             const cell = board[i][j]
-            const cellId = `cell-${i}-${j}`
+            const className = (cell.isMine && cell.isClicked) ? 'mine-clicked' : ''
+            const tdId = `cell-${i}-${j}`
 
             var cellContent = ''
             if (cell.isRevealed) {
-                if (cell.isMine) cellContent = MINE_IMG
+                if (cell.isMine) {
+                    cellContent = MINE_IMG
+                }
                 else if (cell.minesAroundCount > 0) {
                     cellContent = cell.minesAroundCount
                 } else {
@@ -100,7 +106,7 @@ function renderBoard(board) {
                 cellContent = FLAG_IMG
             }
 
-            strHTML += `<td id="${cellId}" onclick="onCellClicked(this, ${i}, ${j})" 
+            strHTML += `<td id="${tdId}" onclick="onCellClicked(this, ${i}, ${j})" class="${className}"
             oncontextmenu="onCellMarked(this, ${i}, ${j})"> ${cellContent}</td>`
         }
         strHTML += '</tr>'
@@ -130,27 +136,20 @@ function countNegs(cellI, cellJ, board) {
             if (board[i][j].isMine) negsCount++
         }
     }
+    console.log(`countNegs (${cellI},${cellJ}) = ${negsCount}`)
     return negsCount
 }
 
 function onCellClicked(elCell, i, j) {
+    console.log(`Cell clicked at (${i}, ${j})`)
     var cell = gBoard[i][j]
 
-    if (cell.isRevealed || cell.isMarked) return
-
-    cell.isRevealed = true
-
-    if (cell.isMine) {
-        elCell.innerHTML = MINE_IMG
-    } else if (cell.minesAroundCount > 0) {
-        elCell.innerText = cell.minesAroundCount
-    } else {
-        elCell.innerText = ''
-    }
+    expandReveal(i, j, elCell, gBoard)
     checkGameOver()
 }
 
 function onCellMarked(elCell, i, j) {
+    console.log(`Cell marked at (${i}, ${j})`)
     var cell = gBoard[i][j]
 
     if (cell.isRevealed) return
@@ -169,34 +168,30 @@ function checkGameOver() {
     //The game ends when all mines are marked, and all the other cells are revealed
     //Mine is clicked or all mines are marked and other cells are revealed
 
-    var totalCells = gLevel.SIZE ** 2
-    var cellsRevealed = 0
-    var minesMarkedCorrectly = 0
-    var mineClicked = false
+    var allMinesMarked = true
+    var allNumbersRevealed = true
 
     for (var i = 0; i < gBoard.length; i++) {
         for (var j = 0; j < gBoard[i].length; j++) {
             var cell = gBoard[i][j]
 
-            if (cell.isRevealed) {
-                cellsRevealed++
-                if (cell.isMine) mineClicked = true
+            if (cell.isRevealed && cell.isMine) {
+                console.log('You lost.')
+                gGame.isOn = false
+                return
             }
 
-            if (cell.isMarked && cell.isMine) {
-                minesMarkedCorrectly++
+            if (cell.isMine && !cell.isMarked) {
+                allMinesMarked = false
+            }
+
+            if (cell.minesAroundCount > 0 && !cell.isRevealed) {
+                allNumbersRevealed = false
             }
         }
     }
 
-    if (mineClicked) {
-        console.log('You lost.')
-        gGame.isOn = false
-        return
-    }
-
-    if (cellsRevealed === (totalCells - gLevel.MINES) &&
-        minesMarkedCorrectly === gLevel.MINES) {
+    if (allMinesMarked && allNumbersRevealed) {
         console.log('You won!')
         gGame.isOn = false
     }
@@ -205,12 +200,58 @@ function checkGameOver() {
 function expandReveal(i, j, elCell, board) {
     //When the user clicks a cell with no mines around, 
     //reveal not only that cell, but also its neighbors
+
+    var cell = board[i][j]
+
+    if (cell.isRevealed || cell.isMarked) return
+    console.log(`(${i}, ${j})`)
+
+    revealCell(cell, elCell)
+
+    if (cell.minesAroundCount === 0) {
+        revealNeighbors(i, j, board)
+    }
+}
+
+function revealCell(cell, elCell) {
+    cell.isRevealed = true
+
+    if (cell.isMine) {
+        cell.isClicked = true
+        revealAll(gBoard)
+        renderBoard(gBoard)
+        return
+    }
+
+    if (cell.minesAroundCount > 0) {
+        elCell.innerText = cell.minesAroundCount
+    } else {
+        elCell.innerText = ''
+    }
+}
+
+function revealNeighbors(i, j, board) {
+    for (var row = i - 1; row <= i + 1; row++) {
+        if (row < 0 || row >= board.length) continue
+
+        for (var col = j - 1; col <= j + 1; col++) {
+            if (col < 0 || col >= board[0].length) continue
+            if (row === i && col === j) continue
+
+            var neighbor = board[row][col]
+            if (neighbor.isRevealed || neighbor.isMarked || neighbor.isMine) continue
+
+            var elNeighbor = document.getElementById(`cell-${row}-${col}`)
+            revealCell(neighbor, elNeighbor)
+        }
+    }
 }
 
 function revealAll(board) {
     for (let i = 0; i < board.length; i++) {
         for (let j = 0; j < board[i].length; j++) {
-            board[i][j].isRevealed = true
+            const cell = board[i][j]
+            cell.isRevealed = true
         }
     }
 }

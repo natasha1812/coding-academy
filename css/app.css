@@ -20,11 +20,6 @@ td {
     cursor: pointer;
 }
 
-td:hover {
-    background-color: #f0f0f0;
-}
-
-
 img {
 	width: 30px;
 }
@@ -55,4 +50,8 @@ button {
 	border: none;
 	width: 100px;
 	cursor: pointer;
+}
+
+.mine-clicked {
+    background-color: red;
 }
