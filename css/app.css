@@ -1,7 +1,7 @@
 body {
 	background-color: white;
 	text-align: center;
-	color: lightgray;
+	color: gray;
 	font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -36,11 +36,11 @@ img {
 }
 
 .game-over {
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	text-align: center;
-	transform: translate(-50%, -50%);
+	margin-top: 20px;
+    color: red;
+    font-weight: bold;
+    font-size: 24px;
+    text-align: center;
 }
 
 button {
@@ -54,4 +54,12 @@ button {
 
 .mine-clicked {
     background-color: red;
+}
+
+.level-selected {
+	background-color: green;
+}
+
+.hidden {
+	display: none;
 }

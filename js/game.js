@@ -9,33 +9,55 @@ const gGame = {
     isOn: false,
     revealedCount: 0,
     markedCount: 0,
-    secsPassed: 0,
+    level: 'easy',
+    isFirstClick: true,
 }
 
-const gLevel = {
-    SIZE: 4,
-    MINES: 2,
+const gLevels = {
+    easy:
+    {
+        SIZE: 4,
+        MINES: 2,
+    },
+
+    medium:
+    {
+        SIZE: 8,
+        MINES: 14,
+    },
+    expert:
+    {
+        SIZE: 12,
+        MINES: 32,
+    },
 }
+
+var gLevel = gLevels.easy
 
 var gBoard
 
 function onInit() {
+    var gameOverEl = document.querySelector('.game-over')
+    gameOverEl.classList.add('hidden')
+
     gBoard = buildBoard(gLevel.SIZE)
-    addRandomMines(gBoard)
-    setMinesNegsCount(gBoard)
 
     gGame.isOn = true
-
-    //gBoard[1][2].isRevealed = true
-    //gBoard[2][3].isRevealed = true
-
-    //gBoard[0][1].isRevealed = true
-    //gBoard[2][2].isRevealed = true
-    //gBoard[3][2].isRevealed = true
-
-    //revealAll(gBoard)
+    gGame.isFirstClick = true
 
     renderBoard(gBoard)
+}
+
+function onSelectLevel(level) {
+    document.querySelector('.easy').classList.remove('level-selected')
+    document.querySelector('.medium').classList.remove('level-selected')
+    document.querySelector('.expert').classList.remove('level-selected')
+    document.querySelector(`.${level}`).classList.add('level-selected')
+
+    gLevel = gLevels[level]
+    onInit()
+
+    console.log('Level:', gLevels[level])
 }
 
 function buildBoard(size) {
@@ -64,7 +86,7 @@ function createCell() {
     return cell
 }
 
-function addRandomMines(board) {
+function addRandomMines(board, firstClickI, firstClickJ) {
     //board[1][2].isMine = true
     //board[2][3].isMine = true
 
@@ -74,10 +96,10 @@ function addRandomMines(board) {
         var i = getRandomInt(gLevel.SIZE)
         var j = getRandomInt(gLevel.SIZE)
 
-        if (!board[i][j].isMine) {
-            board[i][j].isMine = true
-            addedMines++
-        }
+        if ((i === firstClickI && j === firstClickJ) || board[i][j].isMine) continue
+
+        board[i][j].isMine = true
+        addedMines++
     }
 }
 
@@ -141,12 +163,16 @@ function countNegs(cellI, cellJ, board) {
 }
 
 function onCellClicked(elCell, i, j) {
-    console.log(`Cell clicked at (${i}, ${j})`)
-    var cell = gBoard[i][j]
 
+    if (gGame.isFirstClick) {
+        gGame.isFirstClick = false
+        addRandomMines(gBoard, i, j)
+        setMinesNegsCount(gBoard)
+    }
     expandReveal(i, j, elCell, gBoard)
     checkGameOver()
 }
+
 
 function onCellMarked(elCell, i, j) {
     console.log(`Cell marked at (${i}, ${j})`)
@@ -178,6 +204,7 @@ function checkGameOver() {
             if (cell.isRevealed && cell.isMine) {
                 console.log('You lost.')
                 gGame.isOn = false
+                gameOver(false)
                 return
             }
 
@@ -185,7 +212,7 @@ function checkGameOver() {
                 allMinesMarked = false
             }
 
-            if (cell.minesAroundCount > 0 && !cell.isRevealed) {
+            if (!cell.isMine && !cell.isRevealed) {
                 allNumbersRevealed = false
             }
         }
@@ -193,8 +220,13 @@ function checkGameOver() {
 
     if (allMinesMarked && allNumbersRevealed) {
         console.log('You won!')
+        gameOver(true)
         gGame.isOn = false
     }
+}
+
+function isVictory() {
+    checkGameOver()
 }
 
 function expandReveal(i, j, elCell, board) {
@@ -243,6 +275,10 @@ function revealNeighbors(i, j, board) {
 
             var elNeighbor = document.getElementById(`cell-${row}-${col}`)
             revealCell(neighbor, elNeighbor)
+
+            if (neighbor.minesAroundCount === 0) {
+                revealNeighbors(row, col, board)
+            }
         }
     }
 }
@@ -254,8 +290,18 @@ function revealAll(board) {
             cell.isRevealed = true
         }
     }
+    renderBoard(board)
 }
 
-function getRandomInt(max) {
-    return Math.floor(Math.random() * max)
+function gameOver(isVictory) {
+    var gameOver = document.querySelector('.game-over')
+    gameOver.classList.remove('hidden')
+
+    if (isVictory) {
+        gameOver.querySelector('h1').innerText = "You won!"
+    } else {
+        gameOver.querySelector('h1').innerText = "Game over!"
+    }
+
+    gGame.isOn = false
 }

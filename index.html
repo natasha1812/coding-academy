@@ -10,9 +10,20 @@
 </head>
 
 <body onload="onInit()">
+    <div><h1>Play Minesweeper</h1>
+    <h2>Choose your level:</h2>
+    <button class="easy level-selected" onclick="onSelectLevel('easy')">Easy</button> 
+    <button class="medium" onclick="onSelectLevel('medium')">Medium</button>
+    <button class="expert" onclick="onSelectLevel('expert')">Expert</button>
     <table class="game-board" oncontextmenu="return false">
     </table>
+    </div>
+    <div class="game-over hidden">
+        <h1></h1>
+        <button onclick="onInit()">Play Again</button>
+    </div>
     <script src="js/game.js"></script>
+    <script src="js/util.js"></script>
 </body>
 
 </html>
